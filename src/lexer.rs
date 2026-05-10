@@ -1,3 +1,10 @@
+// TODO
+// - [ ] Handle escape characters in strings
+// - [ ] Handle numbers better
+// - [ ] Implement Iterator for Lexer so we can iterate over tokens
+// - [ ] Handle errors better instead of panicking
+// - [ ] Add SourceLocation to tokens for better error reporting
+
 #[derive(Debug)]
 pub(crate) enum TokenKind {
     Punc(char),
@@ -17,8 +24,6 @@ pub(crate) struct Lexer {
     pub tokens: Vec<Token>,
 }
 
-type InputStream = std::iter::Peekable<dyn Iterator<Item = char>>;
-
 impl Lexer {
     fn is_whitespace(c: char) -> bool {
         c == ' ' || c == '\n' || c == '\t' || c == '\r'
@@ -36,64 +41,8 @@ impl Lexer {
         c == 't' || c == 'f' || c == 'n'
     }
 
-    // read while condition is true and input is not empty
-    fn read_while(
-        input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
-        condition: impl Fn(char) -> bool,
-    ) -> String {
-        let mut result = String::new();
-        while let Some(&c) = input.peek() {
-            if condition(c) {
-                result.push(c);
-                input.next();
-            } else {
-                break;
-            }
-        }
-        result
-    }
-
     fn read_whitespace(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) {
         Self::read_while(input, Self::is_whitespace);
-    }
-
-    fn read_next(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Option<Token> {
-        //read whitespace
-        Self::read_whitespace(input);
-
-        // get peek char and if it is none return none
-        let Some(c) = input.peek() else {
-            return None;
-        };
-
-        if c == &'"' {
-            return Some(Self::read_string(input));
-        };
-
-        if c.is_digit(10) {
-            return Some(Self::read_number(input));
-        };
-
-        if Self::is_keyword_start(*c) {
-            return Some(Self::read_keyword(input));
-        }
-
-        if Self::is_punc(*c) {
-            return Some(Self::read_punc(input));
-        };
-
-        // werent able to parse a token, so we return
-        // None
-        panic!("Unexpected character: {}", c);
-    }
-
-    pub(crate) fn tokenize(input: impl Iterator<Item = char>) -> Self {
-        let mut input = input.peekable();
-        let mut tokens = Vec::new();
-        while let Some(token) = Self::read_next(&mut input) {
-            tokens.push(token);
-        }
-        Self { tokens }
     }
 
     fn read_string(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Token {
@@ -146,4 +95,61 @@ impl Lexer {
             kind: TokenKind::Punc(c),
         }
     }
+    
+    // read while condition is true and input is not empty
+    fn read_while(
+        input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
+        condition: impl Fn(char) -> bool,
+    ) -> String {
+        let mut result = String::new();
+        while let Some(&c) = input.peek() {
+            if condition(c) {
+                result.push(c);
+                input.next();
+            } else {
+                break;
+            }
+        }
+        result
+    }
+
+    fn read_next(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Option<Token> {
+        //read whitespace
+        Self::read_whitespace(input);
+
+        // get peek char and if it is none return none
+        let Some(c) = input.peek() else {
+            return None;
+        };
+
+        if c == &'"' {
+            return Some(Self::read_string(input));
+        };
+
+        if c.is_digit(10) {
+            return Some(Self::read_number(input));
+        };
+
+        if Self::is_keyword_start(*c) {
+            return Some(Self::read_keyword(input));
+        }
+
+        if Self::is_punc(*c) {
+            return Some(Self::read_punc(input));
+        };
+
+        // werent able to parse a token, so we return
+        // None
+        panic!("Unexpected character: {}", c);
+    }
+
+    pub(crate) fn tokenize(input: impl Iterator<Item = char>) -> Self {
+        let mut input = input.peekable();
+        let mut tokens = Vec::new();
+        while let Some(token) = Self::read_next(&mut input) {
+            tokens.push(token);
+        }
+        Self { tokens }
+    }
+
 }
