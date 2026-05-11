@@ -19,6 +19,8 @@ pub(crate) enum LexerError {
 pub(crate) enum ParserError {
     #[error("Unexpected token: {0:?}")]
     UnexpectedToken(Token),
+    #[error("Unexpected end of input")]
+    UnexpectedEndOfInput,
     #[error("Expected string key in object, got: {0:?}")]
     ExpectedStringKey(Token),
     #[error("Expected ':' after key in object, got: {0:?}")]

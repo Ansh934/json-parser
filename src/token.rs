@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Token{
     Object(HashMap<String, Token>),
     Array(Vec<Token>),
