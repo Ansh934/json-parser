@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 #[derive(Debug)]
-pub(crate) enum TokenKind {
+pub(crate) enum Token{
     Object(HashMap<String, Token>),
     Array(Vec<Token>),
     Punc(char),
@@ -10,9 +10,4 @@ pub(crate) enum TokenKind {
     True,
     False,
     Null,
-}
-
-#[derive(Debug)]
-pub(crate) struct Token {
-    pub kind: TokenKind,
 }

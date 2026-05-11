@@ -48,17 +48,14 @@ impl Lexer {
         if !found_closing_quote {
             panic!("Unterminated string");
         }
-        Token {
-            kind: TokenKind::Str(result),
-        }
+            Token::Str(result)
+        
     }
 
     fn read_number(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Token {
         let num_str = Self::read_while(input, |c| c.is_digit(10) || c == '.');
         let num = num_str.parse::<f64>().unwrap(); // panic if we fail to parse a number, since we should have only digits and dots
-        Token {
-            kind: TokenKind::Num(num),
-        }
+        Token::Num(num)
     }
 
     fn read_keyword(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Token {
@@ -66,20 +63,18 @@ impl Lexer {
         if !Self::is_keyword(&keyword) {
             panic!("Unexpected keyword: {}", keyword);
         }
-        let kind = match keyword.as_str() {
-            "true" => TokenKind::True,
-            "false" => TokenKind::False,
-            "null" => TokenKind::Null,
+        let token = match keyword.as_str() {
+            "true" => Token::True,
+            "false" => Token::False,
+            "null" => Token::Null,
             _ => unreachable!(),
         };
-        Token { kind }
+        token
     }
 
     fn read_punc(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Token {
         let c = input.next().unwrap();
-        Token {
-            kind: TokenKind::Punc(c),
-        }
+        Token::Punc(c)
     }
     
     // read while condition is true and input is not empty
