@@ -2,8 +2,10 @@
 // - [ ] Handle escape characters in strings
 // - [ ] Handle numbers better
 // - [ ] Implement Iterator for Lexer so we can iterate over tokens
-// - [ ] Handle errors better instead of panicking
-// - [ ] Add SourceLocation to tokens for better error reporting
+// - [o] Handle errors better instead of panicking
+// - [x] Add SourceLocation to tokens for better error reporting
+
+use crate::error::LexerError;
 use crate::token::*;
 
 pub(crate) struct Lexer {
@@ -31,9 +33,18 @@ impl Lexer {
         Self::read_while(input, Self::is_whitespace);
     }
 
-    fn read_string(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Token {
+    fn read_string(
+        input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
+    ) -> Result<Token, LexerError> {
         let mut result = String::new();
-        input.next(); // consume the opening quote
+
+        // consume the opening quote
+        match input.peek() {
+            Some('"') => input.next(), // consume the opening quote and continue
+            Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
+            None => return Err(LexerError::UnexpectedEndOfInput),
+        };
+
         let mut found_closing_quote = false;
         while let Some(&c) = input.peek() {
             if c == '"' {
@@ -46,38 +57,54 @@ impl Lexer {
             }
         }
         if !found_closing_quote {
-            panic!("Unterminated string");
+            return Err(LexerError::UnterminatedString);
         }
-            Token::Str(result)
-        
+        Ok(Token::Str(result))
     }
 
-    fn read_number(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Token {
+    fn read_number(
+        input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
+    ) -> Result<Token, LexerError> {
         let num_str = Self::read_while(input, |c| c.is_digit(10) || c == '.');
-        let num = num_str.parse::<f64>().unwrap(); // panic if we fail to parse a number, since we should have only digits and dots
-        Token::Num(num)
+        let num = num_str
+            .parse::<f64>()
+            .map_err(|_| LexerError::InvalidNumber(num_str))?;
+        Ok(Token::Num(num))
     }
 
-    fn read_keyword(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Token {
+    fn read_keyword(
+        input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
+    ) -> Result<Token, LexerError> {
         let keyword = Self::read_while(input, |c| c.is_alphabetic());
         if !Self::is_keyword(&keyword) {
-            panic!("Unexpected keyword: {}", keyword);
+            return Err(LexerError::UnexpectedKeyword(keyword));
         }
         let token = match keyword.as_str() {
             "true" => Token::True,
             "false" => Token::False,
             "null" => Token::Null,
-            _ => unreachable!(),
+            _ => Err(LexerError::UnexpectedKeyword(keyword))?,
         };
-        token
+        Ok(token)
     }
 
-    fn read_punc(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Token {
-        let c = input.next().unwrap();
-        Token::Punc(c)
+    fn read_punc(
+        input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
+    ) -> Result<Token, LexerError> {
+        let Some(&c) = input.peek() else {
+            return Err(LexerError::UnexpectedEndOfInput);
+        };
+        if !Self::is_punc(c) {
+            return Err(LexerError::UnexpectedCharacter(c));
+        }
+        input.next(); // consume the punctuation character
+        Ok(Token::Punc(c))
     }
-    
-    // read while condition is true and input is not empty
+
+    /// read while condition is true and input is not empty
+    /// returns the string of characters read that satisfy the condition
+    /// returns empty string if the first character does not satisfy the condition or if the input is empty
+    // no result enum is needed
     fn read_while(
         input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
         condition: impl Fn(char) -> bool,
@@ -94,43 +121,26 @@ impl Lexer {
         result
     }
 
-    fn read_next(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) -> Option<Token> {
-        //read whitespace
+    fn read_next(
+        input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
+    ) -> Result<Token, LexerError> {
         Self::read_whitespace(input);
-
-        // get peek char and if it is none return none
-        let Some(c) = input.peek() else {
-            return None;
-        };
-
-        if c == &'"' {
-            return Some(Self::read_string(input));
-        };
-
-        if c.is_digit(10) {
-            return Some(Self::read_number(input));
-        };
-
-        if Self::is_keyword_start(*c) {
-            return Some(Self::read_keyword(input));
+        match input.peek() {
+            Some('"') => return Self::read_string(input),
+            Some(&c) if c.is_digit(10) => return Self::read_number(input),
+            Some(&c) if Self::is_keyword_start(c) => return Self::read_keyword(input),
+            Some(&c) if Self::is_punc(c) => return Self::read_punc(input),
+            Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
+            None => return Err(LexerError::UnexpectedEndOfInput),
         }
-        
-        if Self::is_punc(*c) {
-            return Some(Self::read_punc(input));
-        };
-
-        // werent able to parse a token, so we return
-        // None
-        panic!("Unexpected character: {}", c);
     }
 
-    pub(crate) fn tokenize(input: impl Iterator<Item = char>) -> Self {
+    pub(crate) fn tokenize(input: impl Iterator<Item = char>) -> Result<Self, LexerError> {
         let mut input = input.peekable();
         let mut tokens = Vec::new();
-        while let Some(token) = Self::read_next(&mut input) {
-            tokens.push(token);
+        while input.peek().is_some() {
+            tokens.push(Self::read_next(&mut input)?);
         }
-        Self { tokens }
+        Ok(Self { tokens })
     }
-
 }
