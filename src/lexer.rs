@@ -4,21 +4,7 @@
 // - [ ] Implement Iterator for Lexer so we can iterate over tokens
 // - [ ] Handle errors better instead of panicking
 // - [ ] Add SourceLocation to tokens for better error reporting
-
-#[derive(Debug)]
-pub(crate) enum TokenKind {
-    Punc(char),
-    Num(f64),
-    Str(String),
-    True,
-    False,
-    Null,
-}
-
-#[derive(Debug)]
-pub(crate) struct Token {
-    kind: TokenKind,
-}
+use crate::token::*;
 
 pub(crate) struct Lexer {
     pub tokens: Vec<Token>,
@@ -133,7 +119,7 @@ impl Lexer {
         if Self::is_keyword_start(*c) {
             return Some(Self::read_keyword(input));
         }
-
+        
         if Self::is_punc(*c) {
             return Some(Self::read_punc(input));
         };

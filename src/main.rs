@@ -1,5 +1,6 @@
 mod lexer;
 mod parser;
+mod token;
 
 use crate::lexer::*;
 fn main() {
