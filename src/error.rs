@@ -21,14 +21,8 @@ pub(crate) enum ParserError {
     UnexpectedToken(Token),
     #[error("Unexpected end of input")]
     UnexpectedEndOfInput,
-    #[error("Expected string key in object, got: {0:?}")]
-    ExpectedStringKey(Token),
     #[error("Expected ':' after key in object, got: {0:?}")]
     ExpectedColon(Token),
     #[error("Expected ',' or '}}' after key-value pair in object, got: {0:?}")]
     ExpectedCommaOrClosingBrace(Token),
-    #[error("Expected ']' after array, got: {0:?}")]
-    ExpectedClosingBracket(Token),
-    #[error("Expected value in array, got: {0:?}")]
-    ExpectedValueInArray(Token),
 }

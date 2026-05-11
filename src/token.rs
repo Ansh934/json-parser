@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 
 #[derive(Debug, Clone)]
 pub(crate) enum Token{
-    Object(HashMap<String, Token>),
+    Object(IndexMap<String, Token>),
     Array(Vec<Token>),
     Punc(char),
     Num(f64),

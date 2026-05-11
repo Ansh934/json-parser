@@ -1,3 +1,5 @@
+use indexmap::IndexMap;
+
 use crate::error::ParserError;
 use crate::token::*;
 pub(crate) struct Parser;
@@ -37,7 +39,7 @@ impl Parser {
     fn parse_object(
         tokens: &mut std::iter::Peekable<impl Iterator<Item = Token>>,
     ) -> Result<Token, ParserError> {
-        let mut object = std::collections::HashMap::new();
+        let mut object = IndexMap::new();
 
         // consume the opening '{'
         match tokens.next() {
