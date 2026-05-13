@@ -44,20 +44,57 @@ impl Lexer {
             Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
             None => return Err(LexerError::UnexpectedEndOfInput),
         };
-
-        let mut found_closing_quote = false;
-        while let Some(&c) = input.peek() {
-            if c == '"' {
-                input.next(); // consume the closing quote
-                found_closing_quote = true;
-                break;
-            } else {
-                result.push(c);
-                input.next();
-            }
-        }
-        if !found_closing_quote {
-            return Err(LexerError::UnterminatedString);
+        loop {
+            match input.peek() {
+                Some('"') => {
+                    input.next(); // consume the closing quote
+                    break;
+                } // empty string case
+                Some('\\') => {
+                    input.next(); // consume the escape character
+                    match input.peek() {
+                        Some('"') | Some('\\') | Some('/') => {
+                            result.push(input.next().unwrap()); // consume the escaped character and add it to the result
+                        }
+                        Some('b') => {
+                            result.push('\x08');
+                            input.next(); // consume the escaped character
+                        }
+                        Some('f') => {
+                            result.push('\x0C');
+                            input.next(); // consume the escaped character
+                        }
+                        Some('n') => {
+                            result.push('\n');
+                            input.next(); // consume the escaped character
+                        }
+                        Some('r') => {
+                            result.push('\r');
+                            input.next(); // consume the escaped character
+                        }
+                        Some('t') => {
+                            result.push('\t');
+                            input.next(); // consume the escaped character
+                        }
+                        Some('u') => {
+                            input.next();
+                            // a single hex digit can be (digit || A-F || a-f)
+                            let hex_digits = Self::read_while(input, |c| c.is_digit(16));
+                            if hex_digits.len() != 4 {
+                                return Err(LexerError::InvalidUnicodeEscapeSequence(hex_digits));
+                            }
+                            result.push_str(&format!("\\u{}", hex_digits));
+                        }
+                        Some(&c) => return Err(LexerError::InvalidEscapeSequence(c)),
+                        None => return Err(LexerError::UnterminatedString),
+                    };
+                }
+                Some(&c) => {
+                    result.push(c);
+                    input.next();
+                }
+                None => return Err(LexerError::UnterminatedString),
+            };
         }
         Ok(Token::Str(result))
     }

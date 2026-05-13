@@ -13,6 +13,10 @@ pub(crate) enum LexerError {
     UnexpectedKeyword(String),
     #[error("Unexpected end of input")]
     UnexpectedEndOfInput,
+    #[error("Invalid escape sequence: \\{0}")]
+    InvalidEscapeSequence(char),
+    #[error("Invalid Unicode escape sequence: \\u{0}")]
+    InvalidUnicodeEscapeSequence(String),
 }
 
 #[derive(Debug, Error)]
