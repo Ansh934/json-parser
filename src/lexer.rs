@@ -12,9 +12,17 @@ pub(crate) struct Lexer {
     pub tokens: Vec<Token>,
 }
 
+struct Whitespace;
+impl  Whitespace{
+   const SPACE : char = ' ';
+   const NEWLINE : char = '\n';
+   const TAB : char = '\t';
+   const CARRIAGE_RETURN : char = '\r'; }
+   
+
 impl Lexer {
     fn is_whitespace(c: char) -> bool {
-        c == ' ' || c == '\n' || c == '\t' || c == '\r'
+        c == Whitespace::SPACE || c == Whitespace::NEWLINE || c == Whitespace::TAB || c == Whitespace::CARRIAGE_RETURN
     }
 
     fn is_punc(c: char) -> bool {
@@ -39,11 +47,13 @@ impl Lexer {
         let mut result = String::new();
 
         // consume the opening quote
+        dbg!(&result);
         match input.peek() {
             Some('"') => input.next(), // consume the opening quote and continue
             Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
             None => return Err(LexerError::UnexpectedEndOfInput),
         };
+        dbg!(&result);
         loop {
             match input.peek() {
                 Some('"') => {
@@ -96,6 +106,7 @@ impl Lexer {
                 None => return Err(LexerError::UnterminatedString),
             };
         }
+        dbg!(&result);
         Ok(Token::Str(result))
     }
 
