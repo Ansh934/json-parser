@@ -13,16 +13,19 @@ pub(crate) struct Lexer {
 }
 
 struct Whitespace;
-impl  Whitespace{
-   const SPACE : char = ' ';
-   const NEWLINE : char = '\n';
-   const TAB : char = '\t';
-   const CARRIAGE_RETURN : char = '\r'; }
-   
+impl Whitespace {
+    const SPACE: char = ' ';
+    const NEWLINE: char = '\n';
+    const TAB: char = '\t';
+    const CARRIAGE_RETURN: char = '\r';
+}
 
 impl Lexer {
     fn is_whitespace(c: char) -> bool {
-        c == Whitespace::SPACE || c == Whitespace::NEWLINE || c == Whitespace::TAB || c == Whitespace::CARRIAGE_RETURN
+        c == Whitespace::SPACE
+            || c == Whitespace::NEWLINE
+            || c == Whitespace::TAB
+            || c == Whitespace::CARRIAGE_RETURN
     }
 
     fn is_punc(c: char) -> bool {
@@ -47,13 +50,13 @@ impl Lexer {
         let mut result = String::new();
 
         // consume the opening quote
-        dbg!(&result);
+        // dbg!(&result);
         match input.peek() {
             Some('"') => input.next(), // consume the opening quote and continue
             Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
             None => return Err(LexerError::UnexpectedEndOfInput),
         };
-        dbg!(&result);
+        // dbg!(&result);
         loop {
             match input.peek() {
                 Some('"') => {
@@ -106,7 +109,7 @@ impl Lexer {
                 None => return Err(LexerError::UnterminatedString),
             };
         }
-        dbg!(&result);
+        // dbg!(&result);
         Ok(Token::Str(result))
     }
 
@@ -172,7 +175,6 @@ impl Lexer {
     fn read_next(
         input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
     ) -> Result<Token, LexerError> {
-        Self::read_whitespace(input);
         match input.peek() {
             Some('"') => return Self::read_string(input),
             Some(&c) if c.is_digit(10) => return Self::read_number(input),
@@ -180,6 +182,7 @@ impl Lexer {
             Some(&c) if Self::is_punc(c) => return Self::read_punc(input),
             Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
             None => return Err(LexerError::UnexpectedEndOfInput),
+            // None => Ok(Token::Null), // return null token to signify end of input
         }
     }
 
@@ -187,7 +190,13 @@ impl Lexer {
         let mut input = input.peekable();
         let mut tokens = Vec::new();
         while input.peek().is_some() {
-            tokens.push(Self::read_next(&mut input)?);
+            // dbg!(&tokens);
+            Self::read_whitespace(&mut input);
+            if input.peek().is_some() {
+                let token = Self::read_next(&mut input)?;
+                println!("Read token: {:?}", token);
+                tokens.push(token);
+            }
         }
         Ok(Self { tokens })
     }

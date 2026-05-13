@@ -1,0 +1,57 @@
+{
+  "id": "9f3e2b7c-1d44-4c6a-a9d1-ef0c72c7f91",
+  "title": "Extremely \"Fun\" JSON Example 🚀",
+  "description": "This string contains:\n- newlines\n- tabs\t\t\t\n- quotes: \"hello\"\n- backslashes: \\\\\n- unicode: ❤️ 😈 你好 Привет\n- escaped unicode: \\u2764\\uFE0F\n- fake JSON inside string: \"{ \\\"nested\\\": true }\"\n- regex-like patterns: ^[a-zA-Z0-9_\\\\-]+$\n- SQL injection attempt: '; DROP TABLE users; --\n- HTML: <script>alert(\"xss\")</script>\n- emojis: 😂🔥💀",
+  "path": "C:\\\\Users\\\\Aayan\\\\Documents\\\\project\\\\file.json",
+  "url": "https://example.com/api/search?q=hello%20world&sort=desc",
+  "weirdWhitespace": "line1\r\nline2\nline3\tend",
+  "jsonString": "{\"user\":{\"name\":\"John\",\"roles\":[\"admin\",\"dev\"]},\"active\":true}",
+  "doubleEncodedJson": "\"{\\\\\"deep\\\\\":\\\\\"value\\\\\"}\"",
+  "array": [
+    "simple",
+    "quote: \"inside\"",
+    "backslash: \\\\",
+    "unicode: \\uD83D\\uDE80",
+    "{\"looks\":\"like json but is string\"}",
+    "multi\nline\nstring",
+    "tab\tseparated\tvalues",
+    "emoji 😀😂🔥",
+    "control chars \\b \\f \\n \\r \\t"
+  ],
+  "nested": {
+    "level1": {
+      "level2": {
+        "level3": {
+          "message": "Deep nesting with escaped chars: \\\"\\\\/\\b\\f\\n\\r\\t",
+          "anotherJson": "{\"a\":1,\"b\":\"text\",\"c\":{\"deep\":true}}"
+        }
+      }
+    }
+  },
+  "users": [
+    {
+      "name": "Alice",
+      "bio": "Loves parsing JSON.\nSometimes breaks parsers 😈",
+      "metadata": "{\"lastLogin\":\"2026-05-14T12:00:00Z\",\"ip\":\"127.0.0.1\"}"
+    },
+    {
+      "name": "Bob",
+      "bio": "Uses emojis 🤯🔥💻 and weird chars \u0001\u0002",
+      "metadata": "{\"preferences\":{\"theme\":\"dark\",\"language\":\"en-US\"}}"
+    }
+  ],
+  "booleansAndNull": {
+    "truthy": true,
+    "falsy": false,
+    "nothing": null
+  },
+  "edgeCases": {
+    "emptyString": "",
+    "spaceString": "   ",
+    "escapedSlash": "https:\\/\\/example.com\\/path",
+    "mixedEscapes": "\\n\\t\\r\\\\\\\"",
+    "surrogatePair": "\\uD83D\\uDE02",
+    "rtlText": "مرحبا بالعالم",
+    "zeroWidth": "hello\u200Bworld"
+  }
+}
