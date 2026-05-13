@@ -3,9 +3,11 @@ mod error;
 mod lexer;
 mod parser;
 mod token;
+mod value;
 
 use crate::lexer::*;
 use crate::parser::*;
+use crate::value::*;
 use std::env;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

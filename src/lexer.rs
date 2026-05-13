@@ -215,14 +215,34 @@ impl Lexer {
     fn read_punc(
         input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
     ) -> Result<Token, LexerError> {
-        let Some(&c) = input.peek() else {
-            return Err(LexerError::UnexpectedEndOfInput);
-        };
-        if !Self::is_punc(c) {
-            return Err(LexerError::UnexpectedCharacter(c));
+        match input.peek() {
+            Some(&LEFT_BRACE) => {
+                input.next(); // consume the '{'
+                return Ok(Token::LeftBrace);
+            }
+            Some(&RIGHT_BRACE) => {
+                input.next(); // consume the '}'
+                return Ok(Token::RightBrace);
+            }
+            Some(&LEFT_BRACKET) => {
+                input.next(); // consume the '['
+                return Ok(Token::LeftBracket);
+            }   
+            Some(&RIGHT_BRACKET) => {
+                input.next(); // consume the ']'
+                return Ok(Token::RightBracket);
+            }
+            Some(&COLON) => {
+                input.next(); // consume the ':'
+                return Ok(Token::Colon);
+            }
+            Some(&COMMA) => {
+                input.next(); // consume the ','
+                return Ok(Token::Comma);
+            }
+            Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
+            None => return Err(LexerError::UnexpectedEndOfInput),
         }
-        input.next(); // consume the punctuation character
-        Ok(Token::Punc(c))
     }
 
     /// read while condition is true and input is not empty

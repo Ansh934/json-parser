@@ -1,12 +1,18 @@
 use indexmap::IndexMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Token {
-    Object(IndexMap<String, Token>),
-    Array(Vec<Token>),
-    Punc(char),
-    Num(f64),
+    // Structural
+    LeftBrace,    // {
+    RightBrace,   // }
+    LeftBracket,  // [
+    RightBracket, // ]
+    Colon,        // :
+    Comma,        // ,
+    
+    // Primitives
     Str(String),
+    Num(f64),
     True,
     False,
     Null,
