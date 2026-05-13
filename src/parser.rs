@@ -1,5 +1,6 @@
 use indexmap::IndexMap;
 
+use crate::constants::*;
 use crate::error::ParserError;
 use crate::token::*;
 pub(crate) struct Parser;
@@ -14,8 +15,8 @@ impl Parser {
         tokens: &mut std::iter::Peekable<impl Iterator<Item = Token>>,
     ) -> Result<Token, ParserError> {
         match tokens.peek() {
-            Some(Token::Punc('{')) => Self::parse_object(tokens),
-            Some(Token::Punc('[')) => Self::parse_array(tokens),
+            Some(Token::Punc(LEFT_BRACE)) => Self::parse_object(tokens),
+            Some(Token::Punc(LEFT_BRACKET)) => Self::parse_array(tokens),
             Some(Token::Str(_)) => tokens.next().ok_or(ParserError::UnexpectedEndOfInput),
             Some(Token::Num(_)) => tokens.next().ok_or(ParserError::UnexpectedEndOfInput),
             Some(Token::True) => tokens.next().ok_or(ParserError::UnexpectedEndOfInput),
@@ -43,14 +44,14 @@ impl Parser {
 
         // consume the opening '{'
         match tokens.next() {
-            Some(Token::Punc('{')) => (),
+            Some(Token::Punc(LEFT_BRACE)) => (),
             Some(token) => return Err(ParserError::UnexpectedToken(token)),
             None => return Err(ParserError::UnexpectedEndOfInput),
         };
 
         loop {
             match tokens.peek() {
-                Some(Token::Punc('}')) => {
+                Some(Token::Punc(RIGHT_BRACE)) => {
                     tokens.next(); // consume the closing '}' and break
                     break;
                 }
@@ -58,7 +59,7 @@ impl Parser {
                     loop {
                         let key = Self::parse_string(tokens)?;
                         match tokens.next() {
-                            Some(Token::Punc(':')) => (),
+                            Some(Token::Punc(COLON)) => (),
                             Some(token) => return Err(ParserError::ExpectedColon(token)),
                             None => return Err(ParserError::UnexpectedEndOfInput),
                         }
@@ -66,13 +67,15 @@ impl Parser {
                         object.insert(key, value);
 
                         match tokens.peek() {
-                            Some(Token::Punc(',')) => {
+                            Some(Token::Punc(COMMA)) => {
                                 tokens.next(); // consume the comma and continue parsing the next key-value pair
                             }
-                            Some(Token::Punc('}')) => {
+                            Some(Token::Punc(RIGHT_BRACE)) => {
                                 break;
                             }
-                            Some(token) => return Err(ParserError::ExpectedCommaOrClosingBrace(token.clone())),
+                            Some(token) => {
+                                return Err(ParserError::ExpectedCommaOrClosingBrace(token.clone()));
+                            }
                             None => return Err(ParserError::UnexpectedEndOfInput),
                         }
                     }
@@ -80,7 +83,7 @@ impl Parser {
                 Some(token) => return Err(ParserError::UnexpectedToken(token.clone())),
                 None => return Err(ParserError::UnexpectedEndOfInput),
             }
-        };
+        }
 
         Ok(Token::Object(object))
     }
@@ -91,14 +94,14 @@ impl Parser {
         let mut array = Vec::new();
 
         match tokens.next() {
-            Some(Token::Punc('[')) => (),
+            Some(Token::Punc(LEFT_BRACKET)) => (),
             Some(token) => return Err(ParserError::UnexpectedToken(token)),
             None => return Err(ParserError::UnexpectedEndOfInput),
         };
-        
+
         loop {
             match tokens.peek() {
-                Some(Token::Punc(']')) => {
+                Some(Token::Punc(RIGHT_BRACKET)) => {
                     tokens.next(); // consume the closing bracket and break
                     break;
                 }
@@ -107,20 +110,22 @@ impl Parser {
                     array.push(value);
 
                     match tokens.peek() {
-                        Some(Token::Punc(',')) => {
+                        Some(Token::Punc(COMMA)) => {
                             tokens.next(); // consume the comma and continue parsing the next value
                         }
-                        Some(Token::Punc(']')) => {
+                        Some(Token::Punc(RIGHT_BRACKET)) => {
                             tokens.next(); // consume the closing bracket 
                             break;
                         }
-                        Some(token) => return Err(ParserError::ExpectedCommaOrClosingBrace(token.clone())),
+                        Some(token) => {
+                            return Err(ParserError::ExpectedCommaOrClosingBrace(token.clone()));
+                        }
                         None => return Err(ParserError::UnexpectedEndOfInput),
                     }
                 }
                 None => return Err(ParserError::UnexpectedEndOfInput),
             }
-        } 
+        }
         Ok(Token::Array(array))
     }
 }

@@ -1,10 +1,4 @@
-// TODO
-// - [ ] Handle escape characters in strings
-// - [ ] Handle numbers better
-// - [ ] Implement Iterator for Lexer so we can iterate over tokens
-// - [o] Handle errors better instead of panicking
-// - [x] Add SourceLocation to tokens for better error reporting
-
+use crate::constants::*;
 use crate::error::LexerError;
 use crate::token::*;
 
@@ -12,44 +6,44 @@ pub(crate) struct Lexer {
     pub tokens: Vec<Token>,
 }
 
-struct Whitespace;
-impl Whitespace {
-    const SPACE: char = ' ';
-    const NEWLINE: char = '\n';
-    const TAB: char = '\t';
-    const CARRIAGE_RETURN: char = '\r';
-}
-
 impl Lexer {
     fn is_whitespace(c: char) -> bool {
-        c == Whitespace::SPACE
-            || c == Whitespace::NEWLINE
-            || c == Whitespace::TAB
-            || c == Whitespace::CARRIAGE_RETURN
+        c == SPACE || c == NEWLINE || c == TAB || c == CARRIAGE_RETURN
     }
 
     fn is_punc(c: char) -> bool {
-        c == '{' || c == '}' || c == '[' || c == ']' || c == ':' || c == ','
+        c == LEFT_BRACE
+            || c == RIGHT_BRACE
+            || c == LEFT_BRACKET
+            || c == RIGHT_BRACKET
+            || c == COLON
+            || c == COMMA
     }
 
     fn is_keyword(s: &str) -> bool {
-        s == "true" || s == "false" || s == "null"
+        s == TRUE || s == FALSE || s == NULL
     }
 
     fn is_keyword_start(c: char) -> bool {
-        c == 't' || c == 'f' || c == 'n'
+        c == TRUE.chars().next().unwrap()
+            || c == FALSE.chars().next().unwrap()
+            || c == NULL.chars().next().unwrap()
     }
 
     fn is_number_start(c: char) -> bool {
-        c.is_digit(10) || c == '-'
+        // number can only start with a digit or a minus sign
+        c.is_digit(DECIMAL_BASE) || c == MINUS
     }
 
     fn is_number_end(c: char) -> bool {
-        Self::is_whitespace(c) || c == ',' || c == '}' || c == ']'
+        Self::is_whitespace(c) || c == COMMA || c == RIGHT_BRACE || c == RIGHT_BRACKET
     }
 
-    fn read_whitespace(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) {
-        Self::read_while(input, Self::is_whitespace);
+    fn read_whitespace(
+        input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
+    ) -> Result<(), LexerError> {
+        Self::read_while(input, Self::is_whitespace)?;
+        Ok(())
     }
 
     fn read_string(
@@ -60,51 +54,53 @@ impl Lexer {
         // consume the opening quote
         // dbg!(&result);
         match input.peek() {
-            Some('"') => input.next(), // consume the opening quote and continue
+            Some(&QUOTE) => input.next(), // consume the opening quote and continue
             Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
             None => return Err(LexerError::UnexpectedEndOfInput),
         };
         // dbg!(&result);
         loop {
             match input.peek() {
-                Some('"') => {
+                Some(&QUOTE) => {
                     input.next(); // consume the closing quote
                     break;
                 } // empty string case
-                Some('\\') => {
+                Some(&BACKSLASH) => {
                     input.next(); // consume the escape character
                     match input.peek() {
-                        Some('"') | Some('\\') | Some('/') => {
+                        Some(&QUOTE) | Some(&BACKSLASH) | Some(&SLASH) => {
                             result.push(input.next().unwrap()); // consume the escaped character and add it to the result
                         }
-                        Some('b') => {
-                            result.push('\x08');
+                        Some(&LOWECASE_B) => {
+                            result.push(BACKSPACE);
                             input.next(); // consume the escaped character
                         }
-                        Some('f') => {
-                            result.push('\x0C');
+                        Some(&LOWECASE_F) => {
+                            result.push(FORM_FEED);
                             input.next(); // consume the escaped character
                         }
-                        Some('n') => {
-                            result.push('\n');
+                        Some(&LOWECASE_N) => {
+                            result.push(NEWLINE);
                             input.next(); // consume the escaped character
                         }
-                        Some('r') => {
-                            result.push('\r');
+                        Some(&LOWECASE_R) => {
+                            result.push(CARRIAGE_RETURN);
                             input.next(); // consume the escaped character
                         }
-                        Some('t') => {
-                            result.push('\t');
+                        Some(&LOWECASE_T) => {
+                            result.push(TAB);
                             input.next(); // consume the escaped character
                         }
-                        Some('u') => {
+                        Some(&LOWECASE_U) => {
                             input.next();
                             // a single hex digit can be (digit || A-F || a-f)
-                            let hex_digits = Self::read_while(input, |c| c.is_digit(16))?;
-                            if hex_digits.len() != 4 {
+                            let hex_digits =
+                                Self::read_while(input, |c| c.is_digit(HEXADECIMAL_BASE))?;
+                            if hex_digits.len() != UNICODE_ESCAPE_LENGTH {
                                 return Err(LexerError::InvalidUnicodeEscapeSequence(hex_digits));
                             }
-                            result.push_str(&format!("\\u{}", hex_digits));
+                            result.push_str(UNICODE_ESCAPE_PREFIX);
+                            result.push_str(&hex_digits);
                         }
                         Some(&c) => return Err(LexerError::InvalidEscapeSequence(c)),
                         None => return Err(LexerError::UnterminatedString),
@@ -128,23 +124,23 @@ impl Lexer {
 
         // step 1 handle negative numbers
         match input.peek() {
-            Some('-') => {
-                num_str.push('-');
+            Some(&MINUS) => {
+                num_str.push(MINUS);
                 input.next(); // consume the '-'
             }
-            Some(&c) if c.is_digit(10) => (), // continue to handle the number in the next steps
+            Some(&c) if c.is_digit(DECIMAL_BASE) => (), // continue to handle the number in the next steps
             Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
             None => return Err(LexerError::UnexpectedEndOfInput),
         }
 
         // step 2 handle the integer part (including leading zero case)
         match input.peek() {
-            Some('0') => {
-                num_str.push('0');
+            Some(&ZERO) => {
+                num_str.push(ZERO);
                 input.next(); // consume the '0'
             }
-            Some('1'..='9') => {
-                num_str.push_str(&Self::read_while(input, |c| c.is_digit(10))?);
+            Some(&c) if c.is_digit(DECIMAL_BASE) => {
+                num_str.push_str(&Self::read_while(input, |c| c.is_digit(DECIMAL_BASE))?);
             }
             Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
             None => return Err(LexerError::UnexpectedEndOfInput),
@@ -152,17 +148,18 @@ impl Lexer {
 
         //step 3 handle the fractional part
         match input.peek() {
-            Some('.') => {
-                num_str.push(input.next().unwrap()); // consume the '.' and add it to the num_str
+            Some(&DECIMAL_POINT) => {
+                num_str.push(DECIMAL_POINT);
+                input.next(); // consume the '.' and add it to the num_str
                 match input.peek() {
-                    Some(&c) if c.is_digit(10) => {
-                        num_str.push_str(&Self::read_while(input, |c| c.is_digit(10))?)
+                    Some(&c) if c.is_digit(DECIMAL_BASE) => {
+                        num_str.push_str(&Self::read_while(input, |c| c.is_digit(DECIMAL_BASE))?)
                     }
                     Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
                     None => return Err(LexerError::UnexpectedEndOfInput),
                 }
             }
-            Some('e' | 'E') => (), // handle exponent part in the next step
+            Some(&EXPONENT_LOWER) | Some(&EXPONENT_UPPER) => (), // handle exponent part in the next step
             Some(&c) if Self::is_number_end(c) => (), // end of number, do nothing and let the next token handle it
             Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
             None => return Err(LexerError::UnexpectedEndOfInput),
@@ -170,19 +167,19 @@ impl Lexer {
 
         // step 4 handle the exponent part
         match input.peek() {
-            Some('e' | 'E') => {
+            Some(&EXPONENT_LOWER) | Some(&EXPONENT_UPPER) => {
                 num_str.push(input.next().unwrap()); // consume the 'e' or 'E'
                 match input.peek() {
-                    Some('+' | '-') => {
+                    Some(&PLUS) | Some(&MINUS) => {
                         num_str.push(input.next().unwrap()); // consume the '+' or '-' and add it to the num_str
                     }
-                    Some(&c) if c.is_digit(10) => (), // continue to handle the exponent in the next step
+                    Some(&c) if c.is_digit(DECIMAL_BASE) => (), // continue to handle the exponent in the next step
                     Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
                     None => return Err(LexerError::UnexpectedEndOfInput),
                 }
                 match input.peek() {
-                    Some(&c) if c.is_digit(10) => {
-                        num_str.push_str(&Self::read_while(input, |c| c.is_digit(10))?)
+                    Some(&c) if c.is_digit(DECIMAL_BASE) => {
+                        num_str.push_str(&Self::read_while(input, |c| c.is_digit(DECIMAL_BASE))?)
                     }
                     Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
                     None => return Err(LexerError::UnexpectedEndOfInput),
@@ -207,9 +204,9 @@ impl Lexer {
             return Err(LexerError::UnexpectedKeyword(keyword));
         }
         let token = match keyword.as_str() {
-            "true" => Token::True,
-            "false" => Token::False,
-            "null" => Token::Null,
+            TRUE => Token::True,
+            FALSE => Token::False,
+            NULL => Token::Null,
             _ => Err(LexerError::UnexpectedKeyword(keyword))?,
         };
         Ok(token)
@@ -230,8 +227,7 @@ impl Lexer {
 
     /// read while condition is true and input is not empty
     /// returns the string of characters read that satisfy the condition
-    /// returns empty string if the first character does not satisfy the condition or if the input is empty
-    // no result enum is needed
+    /// returns Error if input is empty before reading any character
     fn read_while(
         input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
         condition: impl Fn(char) -> bool,
@@ -255,7 +251,7 @@ impl Lexer {
         input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
     ) -> Result<Token, LexerError> {
         match input.peek() {
-            Some('"') => return Self::read_string(input),
+            Some(&QUOTE) => return Self::read_string(input),
             Some(&c) if Self::is_number_start(c) => return Self::read_number(input),
             Some(&c) if Self::is_keyword_start(c) => return Self::read_keyword(input),
             Some(&c) if Self::is_punc(c) => return Self::read_punc(input),
@@ -270,7 +266,7 @@ impl Lexer {
         let mut tokens = Vec::new();
         while input.peek().is_some() {
             // dbg!(&tokens);
-            Self::read_whitespace(&mut input);
+            Self::read_whitespace(&mut input)?;
             if input.peek().is_some() {
                 let token = Self::read_next(&mut input)?;
                 // println!("Read token: {:?}", token);

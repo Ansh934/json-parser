@@ -1,14 +1,17 @@
+mod constants;
+mod error;
 mod lexer;
 mod parser;
 mod token;
-mod error;
 
-use std::env;
 use crate::lexer::*;
 use crate::parser::*;
+use std::env;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let file_path = env::args().nth(1).unwrap_or_else(|| "default_test.json".into());
+    let file_path = env::args()
+        .nth(1)
+        .unwrap_or_else(|| "default_test.json".into());
     println!("\nReading file: {}", file_path);
     let content = std::fs::read_to_string(&file_path)?;
     println!("Content of {}: \n{}", file_path, content);
@@ -26,4 +29,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-
+// TODO
+// - [o] Handle escape characters in strings
+// - [o] Handle numbers better
+// - [o] Handle errors better instead of panicking
+// - [o] Add more test cases for edge cases and error cases
+// - [o] Refactor Constants
+// - [x] Add SourceLocation to tokens for better error reporting
+// - [ ] Implement Iterator for Lexer so we can iterate over tokens

@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 
 #[derive(Debug, Clone)]
-pub(crate) enum Token{
+pub(crate) enum Token {
     Object(IndexMap<String, Token>),
     Array(Vec<Token>),
     Punc(char),

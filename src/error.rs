@@ -1,5 +1,5 @@
-use thiserror::Error;
 use crate::token::Token;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub(crate) enum LexerError {
