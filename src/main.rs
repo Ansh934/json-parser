@@ -11,7 +11,7 @@ use std::env;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file_path = env::args()
         .nth(1)
-        .unwrap_or_else(|| "default_test.json".into());
+        .unwrap_or_else(|| "tests/default_test.json".into());
     println!("\nReading file: {}", file_path);
     let content = std::fs::read_to_string(&file_path)?;
     println!("Content of {}: \n{}", file_path, content);
@@ -37,3 +37,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 // - [o] Refactor Constants
 // - [x] Add SourceLocation to tokens for better error reporting
 // - [ ] Implement Iterator for Lexer so we can iterate over tokens
+// - [ ] Implement a pretty printer for the parsed JSON/ Tree structure GUI
