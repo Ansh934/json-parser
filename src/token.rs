@@ -1,5 +1,3 @@
-use indexmap::IndexMap;
-
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Token {
     // Structural
