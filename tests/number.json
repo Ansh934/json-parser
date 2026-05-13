@@ -1,0 +1,101 @@
+{
+  "integers": {
+    "zero": 0,
+    "positive": 123,
+    "negative": -456,
+    "largeInt": 9223372036854775807,
+    "smallInt": -9223372036854775808,
+    "leadingZeroLikeString": "000123"
+  },
+
+  "floats": {
+    "simple": 3.14,
+    "negative": -0.99,
+    "largeFloat": 1234567890.123456789,
+    "smallFloat": 0.000000123,
+    "trailingZeros": 100.5000,
+    "scientificPositive": 1.23e10,
+    "scientificNegative": -4.56e-10,
+    "uppercaseExponent": 7.89E+5
+  },
+
+  "edgeCases": {
+    "maxSafeJsInteger": 9007199254740991,
+    "beyondMaxSafeJsInteger": 9007199254740993,
+    "tinyExponent": 1e-999,
+    "hugeExponent": 1e999,
+    "negativeZero": -0,
+    "zeroFloat": 0.0,
+    "minusZeroFloat": -0.0
+  },
+
+  "numericStrings": {
+    "intString": "42",
+    "floatString": "3.14159",
+    "scientificString": "6.022e23",
+    "hexLikeString": "0xFF",
+    "binaryLikeString": "0b1010",
+    "octalLikeString": "0777",
+    "nanString": "NaN",
+    "infinityString": "Infinity"
+  },
+
+  "arrays": [
+    1,
+    -1,
+    0,
+    999999999,
+    -999999999,
+    3.1415926535,
+    -2.7182818284,
+    1e10,
+    -1e-10,
+    5E+20,
+    -9E-20
+  ],
+
+  "nested": {
+    "level1": {
+      "level2": {
+        "values": [
+          {
+            "id": 1,
+            "score": 99.99,
+            "balance": -12345.6789
+          },
+          {
+            "id": 2,
+            "score": 1.7976931348623157e308,
+            "tiny": 5e-324
+          }
+        ]
+      }
+    }
+  },
+
+  "mixedTypes": {
+    "number": 42,
+    "string": "42",
+    "boolean": true,
+    "nullValue": null,
+    "array": [1, "2", 3.0, false]
+  },
+
+  "parserStress": {
+    "veryLongNumber": 1234567890123456789012345678901234567890,
+    "deepScientific": 9.999999999999999e307,
+    "precisionTest": 0.12345678901234567890123456789,
+    "alternatingSigns": [-1, 1, -2, 2, -3, 3]
+  },
+
+  "invalidExamplesAsStrings": {
+    "leadingZero": "0123",
+    "multipleDots": "1.2.3",
+    "doubleMinus": "--42",
+    "empty": "",
+    "justDot": ".",
+    "expWithoutNumber": "e10",
+    "nanLiteral": "NaN",
+    "infinityLiteral": "Infinity"
+  }
+}

@@ -40,6 +40,14 @@ impl Lexer {
         c == 't' || c == 'f' || c == 'n'
     }
 
+    fn is_number_start(c: char) -> bool {
+        c.is_digit(10) || c == '-'
+    }
+
+    fn is_number_end(c: char) -> bool {
+        Self::is_whitespace(c) || c == ',' || c == '}' || c == ']'
+    }
+
     fn read_whitespace(input: &mut std::iter::Peekable<impl Iterator<Item = char>>) {
         Self::read_while(input, Self::is_whitespace);
     }
@@ -92,7 +100,7 @@ impl Lexer {
                         Some('u') => {
                             input.next();
                             // a single hex digit can be (digit || A-F || a-f)
-                            let hex_digits = Self::read_while(input, |c| c.is_digit(16));
+                            let hex_digits = Self::read_while(input, |c| c.is_digit(16))?;
                             if hex_digits.len() != 4 {
                                 return Err(LexerError::InvalidUnicodeEscapeSequence(hex_digits));
                             }
@@ -116,7 +124,75 @@ impl Lexer {
     fn read_number(
         input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
     ) -> Result<Token, LexerError> {
-        let num_str = Self::read_while(input, |c| c.is_digit(10) || c == '.');
+        let mut num_str = String::new();
+
+        // step 1 handle negative numbers
+        match input.peek() {
+            Some('-') => {
+                num_str.push('-');
+                input.next(); // consume the '-'
+            }
+            Some(&c) if c.is_digit(10) => (), // continue to handle the number in the next steps
+            Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
+            None => return Err(LexerError::UnexpectedEndOfInput),
+        }
+
+        // step 2 handle the integer part (including leading zero case)
+        match input.peek() {
+            Some('0') => {
+                num_str.push('0');
+                input.next(); // consume the '0'
+            }
+            Some('1'..='9') => {
+                num_str.push_str(&Self::read_while(input, |c| c.is_digit(10))?);
+            }
+            Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
+            None => return Err(LexerError::UnexpectedEndOfInput),
+        }
+
+        //step 3 handle the fractional part
+        match input.peek() {
+            Some('.') => {
+                num_str.push(input.next().unwrap()); // consume the '.' and add it to the num_str
+                match input.peek() {
+                    Some(&c) if c.is_digit(10) => {
+                        num_str.push_str(&Self::read_while(input, |c| c.is_digit(10))?)
+                    }
+                    Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
+                    None => return Err(LexerError::UnexpectedEndOfInput),
+                }
+            }
+            Some('e' | 'E') => (), // handle exponent part in the next step
+            Some(&c) if Self::is_number_end(c) => (), // end of number, do nothing and let the next token handle it
+            Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
+            None => return Err(LexerError::UnexpectedEndOfInput),
+        }
+
+        // step 4 handle the exponent part
+        match input.peek() {
+            Some('e' | 'E') => {
+                num_str.push(input.next().unwrap()); // consume the 'e' or 'E'
+                match input.peek() {
+                    Some('+' | '-') => {
+                        num_str.push(input.next().unwrap()); // consume the '+' or '-' and add it to the num_str
+                    }
+                    Some(&c) if c.is_digit(10) => (), // continue to handle the exponent in the next step
+                    Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
+                    None => return Err(LexerError::UnexpectedEndOfInput),
+                }
+                match input.peek() {
+                    Some(&c) if c.is_digit(10) => {
+                        num_str.push_str(&Self::read_while(input, |c| c.is_digit(10))?)
+                    }
+                    Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
+                    None => return Err(LexerError::UnexpectedEndOfInput),
+                }
+            }
+            Some(&c) if Self::is_number_end(c) => (), // end of number, do nothing and let the next token handle it
+            Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
+            None => return Err(LexerError::UnexpectedEndOfInput),
+        }
+
         let num = num_str
             .parse::<f64>()
             .map_err(|_| LexerError::InvalidNumber(num_str))?;
@@ -126,7 +202,7 @@ impl Lexer {
     fn read_keyword(
         input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
     ) -> Result<Token, LexerError> {
-        let keyword = Self::read_while(input, |c| c.is_alphabetic());
+        let keyword = Self::read_while(input, |c| c.is_alphabetic())?;
         if !Self::is_keyword(&keyword) {
             return Err(LexerError::UnexpectedKeyword(keyword));
         }
@@ -159,7 +235,10 @@ impl Lexer {
     fn read_while(
         input: &mut std::iter::Peekable<impl Iterator<Item = char>>,
         condition: impl Fn(char) -> bool,
-    ) -> String {
+    ) -> Result<String, LexerError> {
+        if input.peek().is_none() {
+            return Err(LexerError::UnexpectedEndOfInput);
+        }
         let mut result = String::new();
         while let Some(&c) = input.peek() {
             if condition(c) {
@@ -169,7 +248,7 @@ impl Lexer {
                 break;
             }
         }
-        result
+        Ok(result)
     }
 
     fn read_next(
@@ -177,7 +256,7 @@ impl Lexer {
     ) -> Result<Token, LexerError> {
         match input.peek() {
             Some('"') => return Self::read_string(input),
-            Some(&c) if c.is_digit(10) => return Self::read_number(input),
+            Some(&c) if Self::is_number_start(c) => return Self::read_number(input),
             Some(&c) if Self::is_keyword_start(c) => return Self::read_keyword(input),
             Some(&c) if Self::is_punc(c) => return Self::read_punc(input),
             Some(&c) => return Err(LexerError::UnexpectedCharacter(c)),
@@ -194,7 +273,7 @@ impl Lexer {
             Self::read_whitespace(&mut input);
             if input.peek().is_some() {
                 let token = Self::read_next(&mut input)?;
-                println!("Read token: {:?}", token);
+                // println!("Read token: {:?}", token);
                 tokens.push(token);
             }
         }

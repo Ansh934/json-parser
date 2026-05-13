@@ -1,10 +1,10 @@
 {
-  "first_name": "Joh\nn",
+  "first_name": "John",
   "last_name": "Smith",
   "is_alive": true,
-  "age": 27,
+  "age": -5.0e4   ,
   "address": {
-    "street_address": "21 2nd Street",
+    "street_address": "21\n2nd Street",
     "city": "New York",
     "state": "NY",
     "postal_code": "10021-3100"

@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "version": 1.0000000000000001,
+    "generated_at": "2026-05-14T23:59:59.999999Z",
+    "valid": true,
+    "description": "Extreme JSON parser torture test"
+  },
+
+  "numbers": {
+    "intMax64": 9223372036854775807,
+    "intMin64": -9223372036854775808,
+    "bigInteger": 1234567890123456789012345678901234567890,
+    "tinyFloat": 0.000000000000000000000000000123,
+    "hugeFloat": 999999999999999999999999999999.999999999,
+    "scientific1": 6.02214076e23,
+    "scientific2": -1.7976931348623157e308,
+    "scientific3": 5e-324,
+    "negativeZero": -0,
+    "floatEdge": 0.30000000000000004
+  },
+
+  "strings": {
+    "empty": "",
+    "spaces": "     ",
+    "quotes": "\"double\" and 'single'",
+    "slashes": "\\\\\\//////\\\\",
+    "unicode": "你好 Привет مرحبا 😀🔥💀",
+    "escapedUnicode": "\\uD83D\\uDE02 \\u2764\\uFE0F",
+    "controlChars": "\\b\\f\\n\\r\\t",
+    "jsonInside": "{\"fake\":true,\"nested\":{\"x\":[1,2,3]}}",
+    "sqlInjection": "'; DROP TABLE users; --",
+    "html": "<script>alert(\"xss\")</script>",
+    "regex": "^[A-Za-z0-9_\\\\-]{1,64}$",
+    "pathWindows": "C:\\\\Users\\\\John\\\\Desktop\\\\test.json",
+    "pathUnix": "/var/tmp/app/cache/file.json",
+    "url": "https://example.com/api?q=test%20value&sort=desc#fragment",
+    "zeroWidth": "hello\u200Bworld",
+    "rtl": "مرحبا بالعالم",
+    "multiLine": "line1\nline2\nline3\n\nline5",
+    "surrogatePairs": "😀😂🚀"
+  },
+
+  "booleans": {
+    "t": true,
+    "f": false
+  },
+
+  "nulls": {
+    "a": null,
+    "b": [null, null, null],
+    "c": {
+      "nested": null
+    }
+  },
+
+  "arrays": [
+    [],
+    [1, 2, 3],
+    [[[[[[[[[[[[[[[[["deep"]]]]]]]]]]]]]]]]],
+    [
+      {
+        "id": 1,
+        "values": [1, 2, 3, {"x": true}]
+      },
+      {
+        "id": 2,
+        "values": [4, 5, 6, {"y": false}]
+      }
+    ],
+    [
+      "mixed",
+      123,
+      -45.67e8,
+      true,
+      false,
+      null,
+      {
+        "obj": [1, "2", null]
+      }
+    ]
+  ],
+
+  "deepObject": {
+    "a": {
+      "b": {
+        "c": {
+          "d": {
+            "e": {
+              "f": {
+                "g": {
+                  "h": {
+                    "i": {
+                      "j": "very deep"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "escapedMadness": "{\"a\":\"\\\\\\\"quoted\\\\\\\"\",\"b\":\"line1\\nline2\",\"c\":\"tab\\tend\"}",
+
+  "duplicateLikeKeys": {
+    "Key": 1,
+    "key": 2,
+    "KEY": 3
+  },
+
+  "whitespaceTest": {
+    "normal": 1,
+    
+    
+    "extra_newlines": 2,
+		"tabs": 3,
+ "spaces": 4
+  },
+
+  "edgeCases": {
+    "emptyObject": {},
+    "emptyArray": [],
+    "arrayOfObjects": [{}, {}, {}],
+    "objectOfArrays": {
+      "a": [],
+      "b": [[], []]
+    }
+  }
+}
