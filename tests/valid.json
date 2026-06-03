@@ -1,0 +1,17 @@
+[
+    true,
+    false,
+    null,
+    123,
+    -123,
+    0,
+    1.23,
+    {
+        "key": "value",
+        "number": 42,
+        "boolean": true,
+        "nullValue": null,
+        "array": [1, 2, 3]
+    },
+    {}
+]

@@ -8,7 +8,32 @@ pub(crate) struct Parser;
 impl Parser {
     pub(crate) fn parse(tokens: Vec<Token>) -> Result<JsonValue, ParserError> {
         let mut tokens = tokens.into_iter().peekable();
-        Self::parse_object(&mut tokens)
+        Self::parse_value(&mut tokens)
+    }
+
+    fn parse_value(
+        tokens: &mut std::iter::Peekable<impl Iterator<Item = Token>>,
+    ) -> Result<JsonValue, ParserError> {
+        match tokens.peek() {
+            Some(Token::LeftBrace) => Self::parse_object(tokens),
+            Some(Token::LeftBracket) => Self::parse_array(tokens),
+            Some(Token::Str(_)) => Self::parse_string(tokens).map(JsonValue::Str),
+            Some(Token::Num(_)) => Self::parse_number(tokens).map(JsonValue::Num),
+            Some(Token::True) => tokens
+                .next()
+                .ok_or(ParserError::UnexpectedEndOfInput)
+                .map(|_| JsonValue::Bool(true)),
+            Some(Token::False) => tokens
+                .next()
+                .ok_or(ParserError::UnexpectedEndOfInput)
+                .map(|_| JsonValue::Bool(false)),
+            Some(Token::Null) => tokens
+                .next()
+                .ok_or(ParserError::UnexpectedEndOfInput)
+                .map(|_| JsonValue::Null),
+            Some(_) => Err(ParserError::UnexpectedToken(tokens.next().unwrap())),
+            None => Err(ParserError::UnexpectedEndOfInput),
+        }
     }
 
     fn parse_object(
@@ -63,31 +88,6 @@ impl Parser {
 
         Ok(JsonValue::Object(object))
     }
-    fn parse_value(
-        tokens: &mut std::iter::Peekable<impl Iterator<Item = Token>>,
-    ) -> Result<JsonValue, ParserError> {
-        match tokens.peek() {
-            Some(Token::LeftBrace) => Self::parse_object(tokens),
-            Some(Token::LeftBracket) => Self::parse_array(tokens),
-            Some(Token::Str(_)) => Self::parse_string(tokens).map(JsonValue::Str),
-            Some(Token::Num(_)) => Self::parse_number(tokens).map(JsonValue::Num),
-            Some(Token::True) => tokens
-                .next()
-                .ok_or(ParserError::UnexpectedEndOfInput)
-                .map(|_| JsonValue::Bool(true)),
-            Some(Token::False) => tokens
-                .next()
-                .ok_or(ParserError::UnexpectedEndOfInput)
-                .map(|_| JsonValue::Bool(false)),
-            Some(Token::Null) => tokens
-                .next()
-                .ok_or(ParserError::UnexpectedEndOfInput)
-                .map(|_| JsonValue::Null),
-            Some(_) => Err(ParserError::UnexpectedToken(tokens.next().unwrap())),
-            None => Err(ParserError::UnexpectedEndOfInput),
-        }
-    }
-
     fn parse_array(
         tokens: &mut std::iter::Peekable<impl Iterator<Item = Token>>,
     ) -> Result<JsonValue, ParserError> {
